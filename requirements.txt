@@ -3,6 +3,5 @@ numpy
 scikit-learn
 matplotlib
 seaborn
-streamlit
+streamlit==1.40.0
 google-generativeai
-altair==5.3.0
