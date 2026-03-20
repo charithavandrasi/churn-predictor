@@ -4,4 +4,4 @@ scikit-learn
 matplotlib
 seaborn
 streamlit==1.40.0
-google-generativeai
+groq
