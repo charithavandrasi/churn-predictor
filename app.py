@@ -40,34 +40,35 @@ with tab1:
     # ── Sidebar inputs ────────────────────────────────────────
     st.sidebar.header("Customer Details")
 
-    gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-    senior = st.sidebar.selectbox("Senior Citizen", ["No", "Yes"])
-    partner = st.sidebar.selectbox("Has Partner", ["Yes", "No"])
-    dependents = st.sidebar.selectbox("Has Dependents", ["Yes", "No"])
+    gender = st.sidebar.selectbox("Gender", ["Male", "Female"], index=0)
+    senior = st.sidebar.selectbox("Senior Citizen", ["No", "Yes"], index=0)
+    partner = st.sidebar.selectbox("Has Partner", ["Yes", "No"], index=0)
+    dependents = st.sidebar.selectbox("Has Dependents", ["Yes", "No"], index=0)
     tenure = st.sidebar.slider("Tenure (months)", 0, 72, 12)
-    phone_service = st.sidebar.selectbox("Phone Service", ["Yes", "No"])
-    multiple_lines = st.sidebar.selectbox("Multiple Lines", ["Yes", "No"])
+    phone_service = st.sidebar.selectbox("Phone Service", ["Yes", "No"], index=0)
+    multiple_lines = st.sidebar.selectbox("Multiple Lines", ["Yes", "No"], index=0)
     internet_service = st.sidebar.selectbox("Internet Service",
-                        ["Fiber optic", "DSL", "No"])
+                        ["Fiber optic", "DSL", "No"], index=0)
     online_security = st.sidebar.selectbox("Online Security",
-                        ["Yes", "No", "No internet service"])
+                        ["Yes", "No", "No internet service"], index=0)
     online_backup = st.sidebar.selectbox("Online Backup",
-                        ["Yes", "No", "No internet service"])
+                        ["Yes", "No", "No internet service"], index=0)
     device_protection = st.sidebar.selectbox("Device Protection",
-                        ["Yes", "No", "No internet service"])
+                        ["Yes", "No", "No internet service"], index=0)
     tech_support = st.sidebar.selectbox("Tech Support",
-                        ["Yes", "No", "No internet service"])
+                        ["Yes", "No", "No internet service"], index=0)
     streaming_tv = st.sidebar.selectbox("Streaming TV",
-                        ["Yes", "No", "No internet service"])
+                        ["Yes", "No", "No internet service"], index=0)
     streaming_movies = st.sidebar.selectbox("Streaming Movies",
-                        ["Yes", "No", "No internet service"])
+                        ["Yes", "No", "No internet service"], index=0)
     contract = st.sidebar.selectbox("Contract Type",
-                        ["Month-to-month", "One year", "Two year"])
-    paperless = st.sidebar.selectbox("Paperless Billing", ["Yes", "No"])
+                        ["Month-to-month", "One year", "Two year"], index=0)
+    paperless = st.sidebar.selectbox("Paperless Billing", ["Yes", "No"], index=0)
     payment = st.sidebar.selectbox("Payment Method", [
-                        "Electronic check", "Mailed check",
+                        "Electronic check",
+                        "Mailed check",
                         "Bank transfer (automatic)",
-                        "Credit card (automatic)"])
+                        "Credit card (automatic)"], index=0)
     monthly_charges = st.sidebar.slider("Monthly Charges ($)", 0.0, 120.0, 65.0)
     total_charges = st.sidebar.slider("Total Charges ($)", 0.0, 9000.0, 1500.0)
 
@@ -159,108 +160,94 @@ with tab2:
         help="Get your free API key at https://console.groq.com"
     )
 
-    # ── Chat history ──────────────────────────────────────────
+    # ── Initialize chat history ───────────────────────────────
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # ── Suggested questions (only show when no messages yet) ──
+    # ── AI response helper function ───────────────────────────
+    def get_ai_response(question, key):
+        context = """
+        You are an expert data scientist assistant for a Customer Churn Prediction project.
+        Here are the key facts about this project:
+        - Dataset: IBM Telco Customer Churn with 7,043 customers and 21 features
+        - Churn rate: 26.5% of customers churned
+        - Best model: Logistic Regression with 82.11% accuracy
+        - Top churn factors: Total Charges, Monthly Charges, Tenure
+        - Key insight: Month-to-month contract customers churn far more than yearly contract customers
+        - Key insight: Fiber optic internet customers churn more than DSL customers
+        - Key insight: Customers with no online security churn more
+        Answer questions clearly, concisely and in a business-friendly way.
+        """
+        client = Groq(api_key=key)
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": context},
+                {"role": "user", "content": question}
+            ]
+        )
+        return response.choices[0].message.content
+
+    # ── Suggested questions ───────────────────────────────────
     if len(st.session_state.messages) == 0:
         st.markdown("**💡 Try asking:**")
         col1, col2 = st.columns(2)
-
         suggested = None
         with col1:
-            if st.button("What type of customers churn the most?"):
+            if st.button("What type of customers churn the most?", use_container_width=True):
                 suggested = "What type of customers churn the most?"
-            if st.button("How can the business reduce churn?"):
+            if st.button("How can the business reduce churn?", use_container_width=True):
                 suggested = "How can the business reduce churn?"
         with col2:
-            if st.button("Why does tenure affect churn?"):
+            if st.button("Why does tenure affect churn?", use_container_width=True):
                 suggested = "Why does tenure affect churn?"
-            if st.button("What does the model accuracy of 82% mean?"):
-                suggested = "What does the model accuracy of 82% mean?"
+            if st.button("What does 82% model accuracy mean?", use_container_width=True):
+                suggested = "What does 82% model accuracy mean?"
 
         if suggested:
-            st.session_state.messages.append({"role": "user", "content": suggested})
-            if api_key:
+            if not api_key:
+                st.warning("Please enter your Groq API key above first!")
+            else:
+                st.session_state.messages.append({"role": "user", "content": suggested})
                 try:
-                    client = Groq(api_key=api_key)
-                    context = """
-                    You are an expert data scientist assistant for a Customer Churn Prediction project.
-                    Dataset: IBM Telco Customer Churn, 7043 customers, 21 features.
-                    Churn rate: 26.5%. Best model: Logistic Regression 82.11% accuracy.
-                    Top churn factors: Total Charges, Monthly Charges, Tenure.
-                    Key insights: Month-to-month contracts churn most. Fiber optic customers churn more. No online security = higher churn.
-                    Answer clearly and in a business-friendly way.
-                    """
-                    response = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
-                        messages=[
-                            {"role": "system", "content": context},
-                            {"role": "user", "content": suggested}
-                        ]
-                    )
-                    reply = response.choices[0].message.content
+                    reply = get_ai_response(suggested, api_key)
                     st.session_state.messages.append({"role": "assistant", "content": reply})
                 except Exception as e:
                     st.session_state.messages.append({"role": "assistant", "content": f"Error: {str(e)}"})
-            st.rerun()
+                st.rerun()
 
-    # ── Display all previous messages ─────────────────────────
+    # ── Display chat history ──────────────────────────────────
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
+    # ── Clear chat button ─────────────────────────────────────
+    if len(st.session_state.messages) > 0:
+        if st.button("🗑️ Clear chat", use_container_width=False):
+            st.session_state.messages = []
+            st.rerun()
+
     # ── Chat input ────────────────────────────────────────────
     st.divider()
-    col_input, col_btn = st.columns([5, 1])
-    with col_input:
-        user_input = st.text_input("", placeholder="Ask a question about churn...", label_visibility="collapsed", key="chat_input")
-    with col_btn:
-        send = st.button("Send ➤", use_container_width=True)
+    with st.form(key="chat_form", clear_on_submit=True):
+        col_input, col_btn = st.columns([5, 1])
+        with col_input:
+            user_input = st.text_input(
+                "Your question",
+                placeholder="Ask a question about churn...",
+                label_visibility="collapsed"
+            )
+        with col_btn:
+            submitted = st.form_submit_button("Send ➤", use_container_width=True)
 
-    prompt = user_input if send and user_input else None
-    if prompt:
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
+    if submitted and user_input:
         if not api_key:
-            with st.chat_message("assistant"):
-                st.warning("Please enter your Groq API key above to use the AI assistant.")
+            st.warning("Please enter your Groq API key above first!")
         else:
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    try:
-                        client = Groq(api_key=api_key)
-
-                        context = """
-                        You are an expert data scientist assistant for a Customer Churn Prediction project.
-                        Here are the key facts about this project:
-                        - Dataset: IBM Telco Customer Churn with 7,043 customers and 21 features
-                        - Churn rate: 26.5% of customers churned
-                        - Best model: Logistic Regression with 82.11% accuracy
-                        - Top churn factors: Total Charges, Monthly Charges, Tenure
-                        - Key insight: Month-to-month contract customers churn far more than yearly contract customers
-                        - Key insight: Fiber optic internet customers churn more than DSL customers
-                        - Key insight: Customers with no online security churn more
-                        Answer questions clearly, concisely and in a business-friendly way.
-                        """
-
-                        response = client.chat.completions.create(
-                            model="llama-3.3-70b-versatile",
-                            messages=[
-                                {"role": "system", "content": context},
-                                {"role": "user", "content": prompt}
-                            ]
-                        )
-                        reply = response.choices[0].message.content
-                        st.markdown(reply)
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": reply
-                        })
-
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}. Please check your API key.")
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            try:
+                reply = get_ai_response(user_input, api_key)
+                st.session_state.messages.append({"role": "assistant", "content": reply})
+            except Exception as e:
+                st.session_state.messages.append({"role": "assistant", "content": f"Error: {str(e)}"})
+            st.rerun()
