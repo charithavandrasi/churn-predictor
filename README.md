@@ -1,6 +1,7 @@
 # 📊 Customer Churn Prediction App — AI Powered
 
 An end-to-end machine learning web application that predicts whether a telecom customer is likely to churn, complete with an AI-powered chatbot assistant for business insights.
+
 🌐 **Live Demo:** [https://churn-predictor-1605130281.streamlit.app](https://churn-predictor-1605130281.streamlit.app)
 
 💻 **GitHub:** [https://github.com/charithavandrasi/churn-predictor](https://github.com/charithavandrasi/churn-predictor)
